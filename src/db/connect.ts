@@ -3,15 +3,17 @@ import config from 'config'
 import log from '../logger'
 
 const connect = () => {
-    const dbUri:string = config.get('dbUri') as string
-    log.info(dbUri)
+  const dbUri: string = config.get('dbUri')
 
-    return mongoose.connect(dbUri).then(() =>{
-        log.info('Database connected')
-    }).catch((error) => {
-        log.error("db error", error)
-        process.exit(1)
+  return mongoose
+    .connect(dbUri)
+    .then(() => {
+      log.info('Database connected')
+    })
+    .catch((error: Error) => {
+      log.error('db error', error)
+      process.exit(1)
     })
 }
 
-export default connect;
+export default connect

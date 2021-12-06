@@ -1,44 +1,46 @@
-import mongoose from 'mongoose'
-import config from 'config'
+import { Schema, Document, model } from 'mongoose'
 import bcrypt from 'bcrypt'
 
-export interface UserDocument extends mongoose.Document {
-    name: string;
-    email: string;
-    password: string;
-    createdAt: Date;
-    comparePassword(comparePassword: string): Promise<boolean>;
+export interface User extends Document {
+  firstname: string
+  surname: string
+  email: string
+  password: string
 }
 
-const UserSchema = new mongoose.Schema(
+const userSchema = new Schema<User>(
   {
-    email: { type: "string", required: true, unique: true },
-    name: { type: "string", required: true },
-    password: { type: "string", required: true },
+    email: { type: String, required: true, unique: true },
+    firstname: { type: String, required: true },
+    surname: { type: String, required: true },
+    password: { type: String, required: true },
   },
-  {
-    timestamps: true,
-  }
-);
+  { timestamps: true }
+)
 
-UserSchema.pre('save', function(next) {
-    let user:UserDocument = this;
+userSchema.pre('save', function (next) {
+  const user: User = this
 
-    if (!user.isModified("password")) return next();
-    
-    const saltRounds = 10;
-    bcrypt.hash(user.password, saltRounds, function(err, hash) {
-        user.password = hash;
-    });
+  if (!user.isModified('password')) return next()
 
-    return next();
+  const saltRounds = 10
+  bcrypt.hash(user.password, saltRounds, function (err, hash) {
+    if (err) return next(err)
+
+    // override the cleartext password with the hashed one
+    user.password = hash
+    next()
+  })
 })
 
-UserSchema.methods.comparePassword = async function(candidatePassword: string){
-    const user:UserDocument = this;
-    return bcrypt.compare(candidatePassword, user.password).catch((e) => false);
-}
+userSchema.set('toJSON', {
+  transform: (document, returnedUser) => {
+    returnedUser.id = returnedUser._id
+    delete returnedUser._id
+    delete returnedUser.__v
+  }
+})
 
-const User = mongoose.model<UserDocument>("User", UserSchema)
+const UserModel = model<User>('User', userSchema)
 
-export default User;
+export default UserModel
