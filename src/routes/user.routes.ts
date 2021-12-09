@@ -1,63 +1,86 @@
 import { Express, Response, Request } from 'express'
+import mongoose from 'mongoose'
 import UserModel from '../model/user.model'
 import log from '../logger'
 
-const userRoutes = (app: Express) => {
+const getUsers = (app: Express) => {
   app.get('/api/users', (req: Request, res: Response) => {
-    UserModel.find({}).then((result) => {
+    UserModel.find({}).populate('group').then((result) => {
       res.status(200).json(result)
     }).catch((error) => {
       log.info(error)
       res.status(500).send({ error: 500, message: 'Internal error' })
     })
   })
+}
 
-  app.get('/api/users/:email', (req: Request, res: Response) => {
-    const userEmail: string = req.params.email
-    UserModel.find({ email: userEmail }).then((result) => {
+const getUserById = (app: Express) => {
+  app.get('/api/users/:id', (req: Request, res: Response) => {
+    const userId = new mongoose.Types.ObjectId(req.params.id)
+    UserModel.find({ _id: userId }).populate('group').then((result) => {
       result ? res.status(200).json(result) : res.status(404).send({ error: 404, message: 'User ID was not found' })
     }).catch((error) => {
       log.info(error)
-      res.status(404).send({ error: 404, message: `User email "${userEmail}" was not found` })
+      res.status(404).send({ error: 404, message: `User email "${userId}" was not found` })
     })
   })
+}
 
+const createNewUser = (app: Express) => {
   app.post('/api/users', (req: Request, res: Response) => {
-    UserModel.insertMany([...req.body], { ordered: false }).then((result) => {
+    const user = new UserModel({ ...req.body })
+    user.save().then((result) => {
       res.status(200).json(result)
     }).catch((error) => {
       log.info(error)
       res.status(404).send({ error: 404, message: error.message }).end()
     })
   })
+}
 
-  app.delete('/api/users/:email', (req: Request, res: Response) => {
-    const userEmail: string = req.params.email
-    UserModel.findOneAndDelete({ email: userEmail }).then((result) => {
-      result ? res.status(200).json(result) : res.status(404).send({ error: 404, message: 'User email was not found' })
+const deleteUserById = (app: Express) => {
+  app.delete('/api/users/:id', (req: Request, res: Response) => {
+    const userId: string = req.params.id
+    UserModel.findOneAndDelete({ email: userId }).then((result) => {
+      result ? res.status(200).json(result) : res.status(404).send({ error: 404, message: 'User ID was not found' })
     }).catch((error) => {
       log.info(error)
       res.status(404).send({ error: 404, message: error.message }).end()
     })
   })
-  app.delete('/api/users/', (req: Request, res: Response) => {
-    UserModel.deleteMany({}).then((result) => {
-      res.status(200).json(result)
-    }).catch((error) => {
-      log.info(error)
-      res.status(404).send({ error: 404, message: error.message }).end()
-    })
-  })
+}
 
-  app.put('/api/users/:email', (req: Request, res: Response) => {
-    const userEmail: string = req.params.email
-    UserModel.findOneAndUpdate({ email: userEmail }, req.body, { returnDocument: 'after' }).then((result) => {
-      result ? res.status(200).json(result) : res.status(404).send({ error: 404, message: 'User email was not found' })
+const editUserById = (app: Express) => {
+  app.put('/api/users/:id', (req: Request, res: Response) => {
+    const userId: string = req.params.id
+    UserModel.findOneAndUpdate({ email: userId }, req.body, { returnDocument: 'after' }).then((result) => {
+      result ? res.status(200).json(result) : res.status(404).send({ error: 404, message: 'User ID was not found' })
     }).catch((error) => {
       log.info(error)
       res.status(404).send({ error: 404, message: error.message }).end()
     })
   })
+}
+
+const getUserByGroup = (app: Express) => {
+  app.get('/api/users/group/:id', (req: Request, res: Response) => {
+    const groupId = new mongoose.Types.ObjectId(req.params.id)
+    UserModel.find({ group: groupId }).populate('group').then((result) => {
+      result ? res.status(200).json(result) : res.status(404).send({ error: 404, message: `No existen usuarios asociados al grupo con ID ${groupId}` })
+    }).catch((error) => {
+      log.info(error)
+      res.status(404).send({ error: 404, message: `No existen usuarios asociados al grupo con ID ${groupId}` })
+    })
+  })
+}
+
+const userRoutes = (app: Express) => {
+  getUsers(app)
+  getUserById(app)
+  createNewUser(app)
+  deleteUserById(app)
+  editUserById(app)
+  getUserByGroup(app)
 }
 
 export default userRoutes

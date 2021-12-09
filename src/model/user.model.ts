@@ -1,16 +1,19 @@
 import { Schema, Document, model } from 'mongoose'
 import bcrypt from 'bcrypt'
+import { Group } from './group.model'
 
 export interface User extends Document {
   firstname: string
   surname: string
   email: string
   password: string
+  group: Group['_id']
 }
 
 const userSchema = new Schema<User>(
   {
     email: { type: String, required: true, unique: true },
+    group: { type: Schema.Types.ObjectId, ref: 'Group', required: true },
     firstname: { type: String, required: true },
     surname: { type: String, required: true },
     password: { type: String, required: true },
@@ -26,8 +29,6 @@ userSchema.pre('save', function (next) {
   const saltRounds = 10
   bcrypt.hash(user.password, saltRounds, function (err, hash) {
     if (err) return next(err)
-
-    // override the cleartext password with the hashed one
     user.password = hash
     next()
   })
