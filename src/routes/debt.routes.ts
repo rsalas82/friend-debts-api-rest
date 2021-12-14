@@ -22,8 +22,7 @@ const getDebtsByGroup = (app:Express) => {
       .then((users) => {
         if (users && users.length > 0) {
           const userIDs = users.map(user => user._id)
-          log.info(userIDs)
-          DebtModel.find({ user: { $in: userIDs } }).sort({ debtSort: 'descending' }).populate('user').then((debts) => {
+          DebtModel.find({ user: { $in: userIDs } }).sort({ debtDate: 'descending' }).populate('user').then((debts) => {
             if (debts && debts.length > 0) {
               res.status(200).send(debts)
             }

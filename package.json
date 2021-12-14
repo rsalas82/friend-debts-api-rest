@@ -6,10 +6,12 @@
   "scripts": {
     "test": "jest",
     "test-cache": "jest --clearCache",
-    "dev": "nodemon --config nodemon.json src/app.ts",
+    "dev": "SET NODE_CONFIG_ENV=dev&&SET NODE_ENV=dev&& nodemon --config nodemon.json src/app.ts",
     "lint-fix": "eslint . --fix",
     "lint": "eslint .",
-    "format": "npx prettier --write ."
+    "format": "npx prettier --write .",
+    "start": "nodemon src/app.js",
+    "tsc": "tsc"
   },
   "repository": {
     "type": "git",
